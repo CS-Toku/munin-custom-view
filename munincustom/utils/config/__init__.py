@@ -8,7 +8,7 @@ from munincustom.utils.parser import MuninConfigParser
 from munincustom.exceptions import FileNotFoundError
 
 
-class ConfigReader:
+class ConfigReader(object):
     default_path = os.path.dirname(__file__)+'/default.conf'
     
     def __init__(self, conf_path=None):
@@ -35,6 +35,18 @@ class ConfigReader:
             return value.format(__path__=munincustom.__path__[0])
         else:
             return None
+
+    def items(self, sec):
+        options = self.config.items(sec) if self.config.has_section(sec) else []
+        default_options = self.default_config.items(sec) if self.default_config.has_section(sec) else []
+
+        for opt in default_options:
+            if reduce(lambda acc, x: acc and opt[0] != x[0], options, True):
+                options.append(opt)
+
+        return options
+        
+
 
         
 
