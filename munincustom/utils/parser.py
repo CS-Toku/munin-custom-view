@@ -11,11 +11,11 @@ MachineTuple = namedtuple('MachineTuple', ['domain', 'host'])
 
 class AbsParser(object):
 
-    def __init__(self, conf):
+    def __init__(self, file_obj):
         if isinstance(conf, file):
-            self.conf_str = conf.read()
+            self.content_str = file_obj.read()
         elif isinstance(conf, str):
-            self.conf_str = open(conf).read()
+            self.content_str = open(file_obj).read()
         else:
             raise TypeError()
 
@@ -31,7 +31,7 @@ class MuninConfigParser(AbsParser):
     def parse(self, load_default=True):
         try:
             # コメント部分を除去=>改行で分割=>空文字をリストから除去=>各要素にstrip
-            conf_data = list(map(lambda x:x.strip(), filter(lambda x: x, re.sub('#.*\n', '\n', self.conf_str).split('\n'))))
+            conf_data = list(map(lambda x:x.strip(), filter(lambda x: x, re.sub('#.*\n', '\n', self.content_str).split('\n'))))
             if conf_data:
                 domain_host = None
                 machine_option = {None:self.__default_options}
@@ -63,7 +63,6 @@ class MuninConfigParser(AbsParser):
 class MuninDataParser(AbsParser):
 
     def parse(self):
-        return self.conf_str
 
 
 
