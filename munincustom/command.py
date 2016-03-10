@@ -7,7 +7,7 @@ from string import Template
 
 import munincustom
 from munincustom.utils.config import ConfigReader
-from munincustom.utils.parser import MuninConfigParser
+from munincustom.utils.parser import MuninConfigParser, MuninDataParser
 
 from  munincustom.exceptions import FileNotFoundError
 
@@ -22,6 +22,9 @@ def cmd():
 def make():
     pass
 
+@cmd.group()
+def load():
+    pass
 
 @make.command()
 @click.option('--conf', help='mc configuration file path.')
@@ -56,8 +59,8 @@ def template(conf, mconf, dest, tmpl, folder, part, name):
     if not valid_data(chk_path, mconf, tmpl, part):
         raise FileNotFoundError(';'.join([str(mconf), str(tmpl), str(part)]))
 
-    mconf_data = MuninConfigParser(mconf)
-    default_dest_path = mconf_data.options['tmpldir'] if 'tmpldir' in mconf_data.options else None
+    _, munin_options = MuninConfigParser(mconf).parse()
+    default_dest_path = munin_options['tmpldir'] if 'tmpldir' in munin_options else None
     if dest is None:
         dest = config.get('template_opt', 'dest_file', default_dest_path)
 
@@ -80,6 +83,46 @@ def template(conf, mconf, dest, tmpl, folder, part, name):
 @click.option('--dest', help='destination folder path.')
 def content(conf, mconf, dest):
     pass
+
+
+
+@load.command()
+@click.option('--conf', help='mc configuration file path.')
+@click.option('--mconf', help='munin configuration file path.')
+@click.option('--dest', help='destination folder path.')
+def graph(conf, mconf, dest):
+    chk_path = lambda path: bool(isinstance(path, str) and os.path.isfile(path))
+
+    config = ConfigReader(conf)
+
+    if mconf is None:
+        mconf = config.get('mc', 'munin_conf')
+
+
+    if not valid_data(chk_path, mconf):
+        raise FileNotFoundError(mconf)
+
+    machines, options = MuninConfigParser(mconf, dict(config.items('munin_config'))).parse()
+    datafile = options['dbdir'] + '/datafile'
+    for k in machines:
+        print(k)
+
+    for k,v in options.items():
+        print(k,v)
+
+    graph_info = MuninDataParser(datafile).parse()
+
+    for g in graph_info[0].values():
+        for a in g.values():
+            print(a['graph_title'])
+
+
+
+
+
+
+
+
 
 def main():
     cmd()
