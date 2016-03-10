@@ -1,5 +1,8 @@
 
 
+class ParseError(Exception):
+    pass
+
 class FileNotFoundError(OSError):
 
     def __init__(self, *args, **kargs):
