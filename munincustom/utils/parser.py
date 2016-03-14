@@ -2,13 +2,12 @@
 #-*- encoding: utf-8 -*-
 
 import re
-from collections import namedtuple
 
+from munincustom.utils import MachineTuple
 from munincustom.graph import Graph, Series
 from munincustom.exceptions import ParseError
 
 
-MachineTuple = namedtuple('MachineTuple', ['domain', 'host'])
 
 class AbsParser(object):
 
