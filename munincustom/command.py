@@ -4,7 +4,11 @@
 import os
 import os.path
 import click
+import json
 from string import Template
+
+from pyrrd.rrd import RRD
+from pyrrd.backend import bindings
 
 import munincustom
 from munincustom.utils.config import ConfigReader
@@ -105,20 +109,24 @@ def graph(conf, mconf, dest):
 
     machines, options = MuninConfigParser(mconf, dict(config.items('munin_config'))).parse()
     datafile = options['dbdir'] + '/datafile'
-    for k in machines:
-        print(k)
-
-    for k,v in options.items():
-        print(k,v)
-
     graph_info = MuninDataParser(datafile).parse()
 
-    for g in graph_info.values():
-        for h in g.values():
-            for s in h.series:
-                assert os.path.isfile(options['dbdir'] + '/' + s.get_rrd_filepath())
-                assert False
-    print('clear!!')
+    for mt, v in graph_info.items():
+        for path, graph in v.items():
+            for s in graph.series:
+                filepath = options['dbdir'] + '/' + s.get_rrd_filepath()
+                print('loading: ' + filepath)
+                rrd = RRD(filepath, mode='r', backend=bindings)
+                data = rrd.fetch(start="-30minutes")['42']
+                content_dist = config.get('mc', 'content_dist', options['htmldir']) + '/'
+                output_file = content_dist + s.get_result_filepath()
+                print('output: ' + output_file)
+                dir_name = os.path.dirname(output_file)
+                if not os.path.lexists(dir_name):
+                    os.makedirs(dir_name)
+                fp = open(output_file, mode='w')
+                json.dump(data, fp, indent=4)
+                print('end')
 
 
 
