@@ -4,6 +4,7 @@
 import re
 from collections import namedtuple
 
+from munincustom.graph import Graph, Series
 from munincustom.exceptions import ParseError
 
 
@@ -11,11 +12,11 @@ MachineTuple = namedtuple('MachineTuple', ['domain', 'host'])
 
 class AbsParser(object):
 
-    def __init__(self, file_obj):
-        if isinstance(conf, file):
-            self.content_str = file_obj.read()
-        elif isinstance(conf, str):
-            self.content_str = open(file_obj).read()
+    def __init__(self, f):
+        if isinstance(f, file):
+            self.content_str = f.read()
+        elif isinstance(f, str):
+            self.content_str = open(f).read()
         else:
             raise TypeError()
 
@@ -63,6 +64,53 @@ class MuninConfigParser(AbsParser):
 class MuninDataParser(AbsParser):
 
     def parse(self):
+        iter_data = re.finditer('^([\w-]+);([\w-]*):([\w\.]+) +(.+)$', self.content_str, re.MULTILINE)
+
+        param_info = {}
+        for data in iter_data:
+            try:
+                mt = MachineTuple(domain=data.group(1), host=data.group(2))
+                cat_name, param_name = data.group(3).rsplit('.', 1)
+                param = data.group(4)
+
+                if mt not in param_info:
+                    param_info[mt] = {}
+                if cat_name not in param_info[mt]:
+                    param_info[mt][cat_name] = {}
+                
+                param_info[mt][cat_name][param_name] = param
+            except ValueError:
+                continue
+
+        # グラフ情報/系列情報を抜き出す
+        graph = {}
+        series = {}
+        strip_prefix = lambda x: x.lstrip('graph_')
+        dict_map = lambda f, dic: dict([(f(i[0]), i[1]) for i in dic.items()])
+        for mt, param_dic_per_machine in param_info.items():
+            graph[mt] = {}
+            series[mt] = {}
+            for cat_name, param_dic in param_dic_per_machine.items():
+                if 'graph_title' in param_dic:
+                    strip_dic = dict_map(strip_prefix, param_dic)
+                    graph[mt][cat_name] = Graph(mt.domain, mt.host, cat_name, **strip_dic)
+                else:
+                    cat_name, series_name = cat_name.rsplit('.', 1)
+                    series_obj = Series(series_name, **param_dic)
+
+                    if cat_name in series[mt]:
+                        series[mt][cat_name].append(series_obj)
+                    else:
+                        series[mt][cat_name] = [series_obj]
+
+        for mt, v in series.items():
+            for cat_name, series_list in v.items():
+                for s in series_list:
+                    graph[mt][cat_name].add_series(s)
+
+        return graph
+
+
 
 
 
