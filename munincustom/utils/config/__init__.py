@@ -14,7 +14,6 @@ class ConfigReader(object):
     def __init__(self, conf_path=None):
         self.config = ConfigParser()
         self.default_config = ConfigParser()
-        print(self.default_path)
         self.default_config.read(self.default_path)
 
         if conf_path is None:

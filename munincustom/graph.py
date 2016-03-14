@@ -47,14 +47,6 @@ class Series(object):
         filename = '-'.join([host, path, self.name, series_type])
         return folder + filename + '.rrd'
 
-    def get_result_filepath(self):
-        domain = self.in_graph.domain
-        host = self.in_graph.host
-        path = self.in_graph.path.replace('.', '-')
-        series_type = self.type[0].lower()
-        folder = '/'.join([domain, host])
-        filename = '-'.join([path, self.name, series_type])
-        return folder + '/' + filename + '.html'
 
 
 
