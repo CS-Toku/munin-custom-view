@@ -2,6 +2,7 @@
 #-*- encoding: utf-8 -*-
 
 import os
+import os.path
 import click
 from string import Template
 
@@ -112,10 +113,12 @@ def graph(conf, mconf, dest):
 
     graph_info = MuninDataParser(datafile).parse()
 
-    for g in graph_info[0].values():
-        for a in g.values():
-            print(a['graph_title'])
-
+    for g in graph_info.values():
+        for h in g.values():
+            for s in h.series:
+                assert os.path.isfile(options['dbdir'] + '/' + s.get_rrd_filepath())
+                assert False
+    print('clear!!')
 
 
 

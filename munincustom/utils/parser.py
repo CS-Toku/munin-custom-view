@@ -4,6 +4,7 @@
 import re
 from collections import namedtuple
 
+from munincustom.graph import Graph, Series
 from munincustom.exceptions import ParseError
 
 
@@ -85,7 +86,7 @@ class MuninDataParser(AbsParser):
         graph = {}
         series = {}
         strip_prefix = lambda x: x.lstrip('graph_')
-        dict_map = lambda f, dic = dict([(i[0], f(i[1])) for i in dic.items()])
+        dict_map = lambda f, dic: dict([(f(i[0]), i[1]) for i in dic.items()])
         for mt, param_dic_per_machine in param_info.items():
             graph[mt] = {}
             series[mt] = {}
@@ -97,7 +98,7 @@ class MuninDataParser(AbsParser):
                     cat_name, series_name = cat_name.rsplit('.', 1)
                     series_obj = Series(series_name, **param_dic)
 
-                    if cat_name in series[k]:
+                    if cat_name in series[mt]:
                         series[mt][cat_name].append(series_obj)
                     else:
                         series[mt][cat_name] = [series_obj]
@@ -105,7 +106,9 @@ class MuninDataParser(AbsParser):
         for mt, v in series.items():
             for cat_name, series_list in v.items():
                 for s in series_list:
-                graph[mt][cat_name].add_series
+                    graph[mt][cat_name].add_series(s)
+
+        return graph
 
 
 
