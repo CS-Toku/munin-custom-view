@@ -2,9 +2,12 @@
 import json
 
 from munincustom.plugin import BaseAnalysisClass
+from munincustom import utils
 
 
 class Analysis(BaseAnalysisClass):
+
+    default_options = utils.load_default_options(__file__)
 
     def analysis(self):
         f = lambda x: x if len(x) <= 5 else x[-5:]

@@ -8,7 +8,6 @@ from pyrrd.backend import bindings
 class BaseAnalysisClass(object):
 
     default_options = {}
-    print(__file__)
 
     def __init__(self, tag, mt_rrd_dict, **kargs):
         self.rrd_data = {}
@@ -49,6 +48,10 @@ class BaseAnalysisClass(object):
         rrd = RRD(filepath, mode='r', backend=bindings)
         rrd_data = rrd.fetch(**kargs)
         return rrd_data['42']
+
+    @classmethod
+    def load_default_options(cls):
+        print(__file__)
 
     def analysis(self):
         """
