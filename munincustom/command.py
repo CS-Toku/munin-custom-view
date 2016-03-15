@@ -209,7 +209,7 @@ def recipe(conf, mconf, recipe, plgdir):
     if plgdir is None:
         plgdir = config.get('mc', 'plugin_dir')
     if not valid_data(check_dir, plgdir):
-        print('recipe directory not found: ' + plgdir)
+        print('plugin directory not found: ' + plgdir)
         return
 
     try:
@@ -331,11 +331,30 @@ def recipe(conf, mconf, recipe, plgdir):
 @click.option('--conf', help='mc configuration file path.')
 @click.option('--plgdir', help='plugin directory.')
 @click.argument('plugin')
-def plugin(conf, plgdir, plugin):
-    pass
+def load_plugin(conf, plgdir, plugin):
+    if plgdir is None:
+        try:
+            config = ConfigReader(conf)
+        except FileNotFoundError:
+            print('mc configuration file not found: ' + conf)
+            return
+        plgdir = config.get('mc', 'plugin_dir')
 
+    if not valid_data(check_dir, plgdir):
+        print('plugin directory not found')
+        return
 
+    try:
+        imp_info = imp.find_module(plugin, [plgdir])
+        m = imp.load_module(plugin, *imp_info)
+    except Exception:
+        print('Module import error')
+        return
 
+    if hasattr(m, 'Analysis') and hasattr(m.Analysis, 'analysis') and hasattr(m.Analysis, 'make_view'):
+        print('\nplugin load test was successful.\n')
+    else:
+        print('There is not implemented method or class in this module.')
 
 
 def main():
