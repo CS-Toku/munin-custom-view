@@ -5,12 +5,18 @@
   host:
     - machine;machine
   source:
-    test: load.load
-    test2: diskstats_latency.sda.avgwrwait
-  cf: AVERAGE
-  start: "-1days"
-  end: "now"
-  resolution: null
+    test: 
+      series: load.load
+      cf: AVERAGE
+      start: "-1days"
+      end: "now"
+      resolution: null
+    test2:
+      series: diskstats_latency.sda.avgwrwait
+      cf: AVERAGE
+      start: "-1days"
+      end: "now"
+      resolution: null
 
 - tag: test_list_plugin
   plugin: test_list_plugins
@@ -19,10 +25,14 @@
   host:
     - machine;machine
   source:
-    - load.load
-    - diskstats_latency.sda.avgwrwait
-  cf: AVERAGE
-  start: "-1days"
-  end: "now"
-  resolution: null
+    - series: load.load
+      cf: AVERAGE
+      start: "-1days"
+      end: "now"
+      resolution: null
+    - series: diskstats_latency.sda.avgwrwait
+      cf: AVERAGE
+      start: "-1days"
+      end: "-5minutes"
+      resolution: null
 

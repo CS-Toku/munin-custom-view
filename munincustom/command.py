@@ -4,15 +4,10 @@
 import os
 import os.path
 import click
-import json
 import imp
 import yaml
 from string import Template
 
-from pyrrd.rrd import RRD
-from pyrrd.backend import bindings
-
-import munincustom
 from munincustom import utils
 from munincustom.utils.config import ConfigReader
 from munincustom.utils.parser import MuninConfigParser, MuninDataParser
@@ -109,6 +104,8 @@ def content(conf, mconf, recipe, dest):
     datafile = options['dbdir'] + '/datafile'
     graph_info = MuninDataParser(datafile).parse()
     recipe_list = yaml.load(open(recipe))
+    plugin_dir = config.get('mc', 'plugin_dir')
+    plugin_modules = {}
 
     for recipe_data in recipe_list:
     # 解析＆生成？
@@ -123,27 +120,50 @@ def content(conf, mconf, recipe, dest):
             for mt, graphs in target_machine.items():
                 target[mt] = {}
                 for k, source in recipe_data['source'].items():
+                    series_name = source['series']
                     for cat_name, graph in graphs.items():
-                        if source in graph.get_series():
-                            source_data = graph.get_series()[source]
-                            target[mt][k] = source_data
+                        if series_name in graph.get_series():
+                            source_data = graph.get_series()[series_name]
+                            source_path = source_data.get_rrd_filepath()
+                            fullpath = options['dbdir'] + '/' + source_path
+                            target[mt][k] = fullpath, source
                             break
 
-        else:
-            if not isinstance(recipe_data['source'], list):
-                recipe_data['source'] = [recipe_data['source']]
+        elif isinstance(recipe_data['source'], list):
             target = {}
             for mt, graphs in target_machine.items():
                 target[mt] = []
                 for source in recipe_data['source']:
+                    series_name = source['series']
                     for cat_name, graph in graphs.items():
-                        if source in graph.get_series():
-                            source_data = graph.get_series()[source]
-                            target[mt].append(source_data)
+                        if series_name in graph.get_series():
+                            source_data = graph.get_series()[series_name]
+                            source_path = source_data.get_rrd_filepath()
+                            fullpath = options['dbdir'] + '/' + source_path
+                            target[mt].append((fullpath, source))
                             break
+        else:
+            raise TypeError('Bad recipe.')
 
-        print(target)
-    
+        if recipe_data['plugin'] in plugin_modules:
+            m = plugin_modules[recipe_data['plugin']]
+        else:
+            imp_info = imp.find_module(recipe_data['plugin'], [plugin_dir])
+            m = imp.load_module(recipe_data['plugin'], *imp_info)
+            plugin_modules[recipe_data['plugin']] = m
+
+        analysis_obj = m.Analysis(recipe_data['tag'], target)
+        machine_state = analysis_obj.analysis()
+        webview = analysis_obj.make_view()
+
+        content_dist = config.get('mc', 'content_dist', options['htmldir'])
+        for mt, web_content in webview.items():
+            output_file = '/'.join([content_dist, mt.domain, mt.host, analysis_obj.tag + '.html'])
+            dir_name = os.path.dirname(output_file)
+            if not os.path.lexists(dir_name):
+                os.makedirs(dir_name)
+            open(output_file, mode='w').write(web_content)
+
 
 
 
@@ -152,45 +172,7 @@ def content(conf, mconf, recipe, dest):
 @click.option('--mconf', help='munin configuration file path.')
 @click.option('--dest', help='destination folder path.')
 def graph(conf, mconf, dest):
-    chk_path = lambda path: bool(isinstance(path, str) and os.path.isfile(path))
-
-    config = ConfigReader(conf)
-
-    if mconf is None:
-        mconf = config.get('mc', 'munin_conf')
-
-
-    if not valid_data(chk_path, mconf):
-        raise FileNotFoundError(mconf)
-
-    machines, options = MuninConfigParser(mconf, dict(config.items('munin_config'))).parse()
-    datafile = options['dbdir'] + '/datafile'
-    graph_info = MuninDataParser(datafile).parse()
-
-    mt_rrd = {}
-    for mt, v in graph_info.items():
-        mt_rrd[mt] = []
-        for path, graph in v.items():
-            for s in graph.series:
-                filepath = options['dbdir'] + '/' + s.get_rrd_filepath()
-                mt_rrd[mt].append(filepath)
-    
-    plugin_dir = config.get('mc', 'plugin_dir')
-    imp_info = imp.find_module('test_plugins', [plugin_dir])
-    m = imp.load_module('test_plugins', *imp_info)
-    analysis_obj = m.Analysis('test_tag', mt_rrd)
-    machine_state = analysis_obj.analysis()
-    webview = analysis_obj.make_view()
-    
-    content_dist = config.get('mc', 'content_dist', options['htmldir'])
-    for k, v in webview.items():
-        output_file = '/'.join([content_dist, k.domain, k.host, analysis_obj.tag + '.html'])
-        print('output: ' + output_file)
-        dir_name = os.path.dirname(output_file)
-        if not os.path.lexists(dir_name):
-            os.makedirs(dir_name)
-        open(output_file, mode='w').write(v)
-
+    pass
 
 
 

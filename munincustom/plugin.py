@@ -1,7 +1,5 @@
 #!/bin/env python
-#-*- encoding: utf-8 -*-
-
-import datetime
+# -*- encoding: utf-8 -*-
 
 from pyrrd.rrd import RRD
 from pyrrd.backend import bindings
@@ -9,44 +7,48 @@ from pyrrd.backend import bindings
 
 class BaseAnalysisClass(object):
 
-    def __init__(self, tag, mt_rrd_dict, cf='AVERAGE',start=None, end=None, resolution=None, **kargs):
+    default_options = {}
+    print(__file__)
+
+    def __init__(self, tag, mt_rrd_dict, **kargs):
         self.rrd_data = {}
         for mt, paths in mt_rrd_dict.items():
             if isinstance(paths, list):
                 self.rrd_data[mt] = []
-                for rrdfilepath in paths:
+                for i in range(len(paths)):
+                    default_options = self.default_options[i] \
+                                        if i in self.default_options else {}
+                    rrdfilepath, options = paths[i]
                     data = self.load_rrd(rrdfilepath,
-                                            cf=cf,
-                                            start=start,
-                                            end=end, 
-                                            resolution=resolution)
+                                         options,
+                                         default_options)
                     self.rrd_data[mt].append(data)
 
             elif isinstance(paths, dict):
                 self.rrd_data[mt] = {}
-                for k, rrdfilepath in paths:
+                for i, (rrdfilepath, options) in paths.items():
+                    default_options = self.default_options[i] \
+                                        if i in self.default_options else {}
                     data = self.load_rrd(rrdfilepath,
-                                            cf=cf,
-                                            start=start,
-                                            end=end, 
-                                            resolution=resolution)
-                    self.rrd_data[mt][k] = data
+                                         options,
+                                         default_options
+                                         )
+                    self.rrd_data[mt][i] = data
 
             else:
                 raise TypeError("This type doesn't support")
 
         self.tag = tag
-        self.start = start
-        self.end = end
-        self.cf = cf
         self.kargs = kargs
 
-
-    def load_rrd(self, filepath, **kargs):
+    def load_rrd(self, filepath, options, default_options):
+        take_param = lambda k: (k, options[k] if k in options
+                                else default_options[k] if k in default_options
+                                else None)
+        kargs = dict(map(take_param, ['start', 'end', 'resolution', 'cf']))
         rrd = RRD(filepath, mode='r', backend=bindings)
         rrd_data = rrd.fetch(**kargs)
         return rrd_data['42']
-
 
     def analysis(self):
         """
@@ -62,7 +64,7 @@ class BaseAnalysisClass(object):
         }
         """
         pass
-    
+
     def make_view(self):
         """
         解析データから、Webページを生成し
@@ -74,4 +76,3 @@ class BaseAnalysisClass(object):
         }
         """
         pass
-
