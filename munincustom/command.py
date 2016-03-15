@@ -29,6 +29,10 @@ def make():
 def load():
     pass
 
+@cmd.group()
+def test():
+    pass
+
 @make.command()
 @click.option('--conf', help='mc configuration file path.')
 @click.option('--mconf', help='munin configuration file path.')
@@ -84,6 +88,7 @@ def template(conf, mconf, dest, tmpl, folder, part, name):
 @click.option('--conf', help='mc configuration file path.')
 @click.option('--mconf', help='munin configuration file path.')
 @click.option('--recipe', help='recipe file path.')
+@click.option('--plgdir', help='plugin directory.')
 @click.option('--dest', help='destination folder path.')
 def content(conf, mconf, recipe, dest):
     chk_path = lambda path: bool(isinstance(path, str) and os.path.isfile(path))
@@ -167,14 +172,21 @@ def content(conf, mconf, recipe, dest):
 
 
 
-@load.command()
+@test.command()
 @click.option('--conf', help='mc configuration file path.')
 @click.option('--mconf', help='munin configuration file path.')
-@click.option('--dest', help='destination folder path.')
-def graph(conf, mconf, dest):
+@click.option('--recipe', help='recipe file path.')
+@click.option('--plgdir', help='plugin directory.')
+def recipe(conf, mconf, recipe, plgdir):
     pass
 
 
+@test.command()
+@click.option('--conf', help='mc configuration file path.')
+@click.option('--plgdir', help='plugin directory.')
+@click.argument('plugin', help='mc configuration file path.')
+def plugin(conf, plgdir, plugin):
+    pass
 
 
 
