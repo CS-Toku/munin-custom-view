@@ -1,0 +1,38 @@
+- tag: test_dict_plugin
+  plugin: test_dict_plugins
+  domain:
+    - localhost
+  host:
+    - machine;machine
+  source:
+    test: 
+      series: load.load
+      cf: AVERAGE
+      start: "-1days"
+      end: "now"
+      resolution: null
+    test2:
+      series: diskstats_latency.sda.avgwrwait
+      cf: AVERAGE
+      start: "-1days"
+      end: "now"
+      resolution: null
+
+- tag: test_list_plugin
+  plugin: test_list_plugins
+  domain:
+    - localhost
+  host:
+    - machine;machine
+  source:
+    - series: load.load
+      cf: AVERAGE
+      start: "-1days"
+      end: "now"
+      resolution: null
+    - series: diskstats_latency.sda.avgwrwait
+      cf: AVERAGE
+      start: "-1days"
+      end: "-5minutes"
+      resolution: null
+
