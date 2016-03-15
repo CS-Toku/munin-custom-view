@@ -26,10 +26,6 @@
     - machine;machine
   source:
     - series: load.load
-      cf: AVERAGE
-      start: "-1days"
-      end: "now"
-      resolution: null
     - series: diskstats_latency.sda.avgwrwait
       cf: AVERAGE
       start: "-1days"
