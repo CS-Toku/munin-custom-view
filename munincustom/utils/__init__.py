@@ -20,8 +20,10 @@ def load_default_options(module_filepath):
     try:
         yaml_obj = yaml.load(open(filepath, 'r'))
     except:
-        return {}
+        yaml_obj = {}
     if isinstance(yaml_obj, list):
         yaml_obj = dict(zip(range(len(yaml_obj)), yaml_obj))
+    elif not isinstance(yaml_obj, dict):
+        yaml_obj = {}
     return yaml_obj
 
