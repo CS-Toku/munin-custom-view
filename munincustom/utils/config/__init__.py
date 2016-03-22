@@ -25,11 +25,11 @@ class ConfigReader(object):
             raise FileNotFoundError(conf_path)
 
     def get(self, sec, opt, default_value=None):
-        if self.config.has_option(sec, opt):
+        if self.config.has_section(sec) and self.config.has_option(sec, opt):
             return self.config.get(sec, opt)
         elif default_value is not None:
             return default_value
-        elif self.default_config.has_option(sec, opt):
+        elif self.default_config.has_section(sec) and self.default_config.has_option(sec, opt):
             value = self.default_config.get(sec, opt)
             return value.format(__path__=munincustom.__path__[0])
         else:

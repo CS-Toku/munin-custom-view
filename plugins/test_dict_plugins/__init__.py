@@ -2,7 +2,7 @@
 import json
 
 from munincustom.plugin import BaseAnalysisClass
-from munincustom import state
+from munincustom import State
 
 
 class Analysis(BaseAnalysisClass):
@@ -13,7 +13,7 @@ class Analysis(BaseAnalysisClass):
         h = lambda y: (y[0], dict(map(g, y[1].items())))
         self.analyzed_data = dict(map(h, self.rrd_data.items()))
 
-        return dict([(x, state.SUCCESS) for x in self.rrd_data])
+        return dict([(x, State.SUCCESS) for x in self.rrd_data])
 
     def make_view(self):
         return dict([(k, json.dumps(v, indent=4))

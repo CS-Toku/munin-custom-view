@@ -1,0 +1,73 @@
+<html>
+<head>
+<title>Munin Custom Page</title>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbarEexample">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">
+          <img id="logo" alt="Brand" src="http://munin-monitoring.org/site/munin.png">
+          カスタムページ
+        </a>
+      </div>
+      
+      <div class="collapse navbar-collapse" id="navbarEexample">
+        <ul class="nav navbar-nav">
+          <ul class="breadcrumb">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Domain_name <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Host_name <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">machine</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Tag_name <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">test</a></li>
+              </ul>
+            </li>
+          </ul>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="#">Munin Top</a></li>
+        </ul>
+      </div>
+    </div>
+   </nav>
+  <div id="body">
+    <div class="container">
+      <ul class="list-group">
+        <a href="#" class="list-group-item">test<span class="label label-success">success</span></a>
+        <a href="#" class="list-group-item list-group-item-warning">test<span class="badge">5</span></a>
+        <a href="#" class="list-group-item list-group-item-danger">test<span class="badge">10</span></a>
+        <a href="#" class="list-group-item">test</a>
+        <a href="#" class="list-group-item">test</a>
+        <a href="#" class="list-group-item">test</a>
+        <a href="#" class="list-group-item">test</a>
+      </ul>
+    </div>
+  </div>
+</body>
+
+</html>
