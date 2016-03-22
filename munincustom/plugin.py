@@ -51,9 +51,9 @@ class BaseAnalysisClass(object):
         * Error = 2
         の3つの状態を辞書で返す
         {
-            ('localhost', 'localhost'): 0,
-            ('machine', 'm1'): 1,
-            ('machine', 'm2'): 2
+            ('localhost', 'localhost'): state.SUCCESS,
+            ('machine', 'm1'): state.WARNING,
+            ('machine', 'm2'): state.ERROR
         }
         """
         pass
