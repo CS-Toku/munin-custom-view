@@ -9,8 +9,8 @@ setup(
     packages=find_packages(),
     package_data={
         'munincustom': [
-            'templates/customview-link.template',
-            'templates/munin-overview.tmpl.template',
+            'templates/*.tmpl',
+            '_static/*',
             'utils/config/default.conf',
         ]
     },

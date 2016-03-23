@@ -1,0 +1,23 @@
+{% extends "layout.tmpl" %}
+
+{% block item_list %}
+  {% for item in item_list %}
+    {% if item.state_cnt.error > 0 %}
+      <a href="{{ item.url }}" class="list-group-item list-group-item-danger">
+        {{ item.name }}
+        <span class="badge">{{ item.state_cnt.error }}</span>
+      </a>
+    {% elif item.state_cnt.warning > 0 %}
+      <a href="{{ item.url }}" class="list-group-item list-group-item-warning">
+        {{ item.name }}
+        <span class="badge">{{ item.state_cnt.warning }}</span>
+      </a>
+    {% else %}
+      <a href="{{ item.url }}" class="list-group-item">
+        {{ item.name }}
+        <span class="label label-success">Success</span>
+      </a>
+    {% endif %}
+  {% endfor %}
+{% endblock%}
+

@@ -11,36 +11,30 @@ class BaseAnalysisClass(object):
 
     def __init__(self, tag, mt_rrd_dict, **kargs):
         self.rrd_data = {}
-        for mt, paths in mt_rrd_dict.items():
-            if isinstance(paths, list):
-                self.rrd_data[mt] = []
-                for i in range(len(paths)):
-                    default_options = self.default_options[i] \
-                                        if i in self.default_options else {}
-                    rrdfilepath, options = paths[i]
-                    data = self.load_rrd(rrdfilepath,
-                                         options,
-                                         default_options)
-                    self.rrd_data[mt].append(data)
-
-            elif isinstance(paths, dict):
-                self.rrd_data[mt] = {}
-                for i, (rrdfilepath, options) in paths.items():
-                    default_options = self.default_options[i] \
-                                        if i in self.default_options else {}
-                    data = self.load_rrd(rrdfilepath,
-                                         options,
-                                         default_options
-                                         )
-                    self.rrd_data[mt][i] = data
-
-            else:
-                raise TypeError("This type doesn't support")
+        for mt, path_option in mt_rrd_dict.items():
+            self.load_rrds_from_pathopt(mt, path_option)
 
         self.tag = tag
         self.kargs = kargs
 
-    def load_rrd(self, filepath, options, default_options):
+    def load_rrds_from_pathopt(self, mt, path_option):
+        if isinstance(path_option, list):
+            self.rrd_data[mt] = [None] * len(path_option)
+            rrd_pairs = zip(range(len(path_option)), path_option)
+        elif isinstance(path_option, dict):
+            self.rrd_data[mt] = {}
+            rrd_pairs = path_option.items()
+        else:
+            raise TypeError("This type doesn't support")
+
+        for i, (rrdfilepath, options) in rrd_pairs:
+            default_options = self.default_options[i] \
+                                if i in self.default_options else {}
+            data = self.load_rrd(rrdfilepath, options, default_options)
+            self.rrd_data[mt][i] = data
+
+    @classmethod
+    def load_rrd(cls, filepath, options, default_options):
         take_param = lambda k: (k, options[k] if k in options
                                 else default_options[k] if k in default_options
                                 else None)
@@ -48,10 +42,6 @@ class BaseAnalysisClass(object):
         rrd = RRD(filepath, mode='r', backend=bindings)
         rrd_data = rrd.fetch(**kargs)
         return rrd_data['42']
-
-    @classmethod
-    def load_default_options(cls):
-        print(__file__)
 
     def analysis(self):
         """
@@ -61,9 +51,9 @@ class BaseAnalysisClass(object):
         * Error = 2
         の3つの状態を辞書で返す
         {
-            ('localhost', 'localhost'): 0,
-            ('machine', 'm1'): 1,
-            ('machine', 'm2'): 2
+            ('localhost', 'localhost'): state.SUCCESS,
+            ('machine', 'm1'): state.WARNING,
+            ('machine', 'm2'): state.ERROR
         }
         """
         pass

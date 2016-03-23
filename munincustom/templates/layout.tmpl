@@ -1,0 +1,124 @@
+<html>
+<head>
+{# ここを設定ファイルに書いてある文字に変更 #}
+<title>
+{{ title }}
+{% if domain is defined %}
+- {{ domain }}
+{% if host is defined %}
+/{{ host }}
+{% if tag is defined %}
+/{{ tag }}
+{% endif %}
+{% endif %}
+{% endif %}
+</title>
+
+{% set static_contents_folder_path = munin_root_depth+content_folder+'/'+static_contents_folder %}
+
+<link rel="stylesheet" href="{{ static_contents_folder_path }}/bootstrap.min.css">
+<link rel="stylesheet" href="{{ static_contents_folder_path }}/customview.css">
+
+<script src="{{ static_contents_folder_path }}/jquery.min.js"></script>
+<script src="{{ static_contents_folder_path }}/bootstrap.min.js"></script>
+</head>
+
+<body>
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbarEexample">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="{{ munin_root_depth }}{{ content_folder }}/">
+          {# ここを後に_staticの画像に変更 #}
+          <img id="logo" alt="Brand" src="{{ munin_root_depth }}static/logo-h.png">
+          {# ここを設定ファイルに書いてある文字に変更 #}
+          {{ title }}
+        </a>
+      </div>
+      
+      <div class="collapse navbar-collapse" id="navbarEexample">
+        <ul class="nav navbar-nav">
+          <ul class="breadcrumb">
+            <li class="dropdown">
+              {# ここをドメイン名に設定する。ない場合はなんかに。 #}
+              <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                {% if domain is defined %}
+                  {{ domain }}
+                {% else %}
+                  choose domain...
+                {% endif %}
+                <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                {# ここにドメインの一覧を表示。 #}
+                {% for d in domains %}
+                  <li><a href="{{ d.url }}">{{ d.name }}</a></li>
+                {% endfor %}
+              </ul>
+            </li>
+            {% if domain is defined %}
+              <li class="dropdown">
+                {# ここをホスト名に設定する。ない場合はなんかに。 #}
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                  {% if host is defined %}
+                  {{ host }}
+                  {% else %}
+                  choose host...
+                  {% endif %}
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    {# ここに選択されているドメインに属するホストの一覧を表示。 
+                    選択されていない場合はdropdownごと表示しない #}
+                    {% for h in hosts %}
+                      <li><a href="{{ h.url }}">{{ h.name }}</a></li>
+                    {% endfor %}
+                </ul>
+              </li>
+              {% if host is defined %}
+                <li class="dropdown">
+                {# ここをタグ名に設定する。ない場合はなんかに。 #}
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                  {% if tag is defined %}
+                  {{ tag }}
+                  {% else %}
+                  choose tag...
+                  {% endif %}
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    {# ここに選択されているドメインに属するホストの一覧を表示。
+                    選択されていない場合はdropdownごと表示しない #}
+                    {% for t in tags %}
+                      <li><a href="{{ t.url }}">{{ t.name }}</a></li>
+                    {% endfor %}
+                </ul>
+                </li>
+              {% endif %}
+            {% endif %}
+          </ul>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          {# Muninのトップページに飛べるリンクを作成 #}
+          <li><a href="{{ munin_root_depth }}">Munin Top</a></li>
+        </ul>
+      </div>
+    </div>
+   </nav>
+  <div id="body">
+    <div class="container">
+      <ul class="list-group">
+        {% block item_list %}
+        {# ここにドメイン・ホスト・タグの一覧と状態を表示。 #}
+        {% endblock %}
+      </ul>
+    </div>
+  </div>
+</body>
+
+</html>

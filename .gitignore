@@ -1,6 +1,8 @@
 
 *.pyc
-python/
+.cache/
+__pycache__/
+python-env/
 *.swp
 *.un~
 go
