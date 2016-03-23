@@ -10,6 +10,7 @@ setup(
     package_data={
         'munincustom': [
             'templates/*.tmpl',
+            '_static/*',
             'utils/config/default.conf',
         ]
     },

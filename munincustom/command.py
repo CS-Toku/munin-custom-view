@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import os
 import os.path
+import shutil
 import click
 import imp
 import yaml
@@ -60,11 +61,11 @@ def template(conf, mconf, dest, tmpl, folder, part, name):
     if mconf is None:
         mconf = config.get('mc', 'munin_conf')
 
+    if folder is None:
+        folder = config.get('mc', 'content_folder')
+
     if tmpl is None:
         tmpl = config.get('template_opt', 'template_file')
-
-    if folder is None:
-        folder = config.get('template_opt', 'folder_name')
 
     if part is None:
         part = config.get('template_opt', 'partial_file')
@@ -91,6 +92,33 @@ def template(conf, mconf, dest, tmpl, folder, part, name):
     open(dest, 'w').write(template_body)
 
 
+@make.command()
+@click.option('--conf', help='mc configuration file path.')
+@click.option('--mconf', help='munin configuration file path.')
+@click.option('--dest', help='destination folder path.')
+def static(conf, mconf, dest):
+
+    config = ConfigReader(conf)
+
+    if mconf is None:
+        mconf = config.get('mc', 'munin_conf')
+
+    if not valid_data(check_path, mconf):
+        raise FileNotFoundError(mconf)
+
+    machines, options = MuninConfigParser(mconf, dict(config.items('munin_config'))).parse()
+    htmldir = options.get('htmldir')
+    htmldir = config.get('munin_config', 'htmldir', htmldir)
+    static_contents_data_path = config.get('mc', 'static_contents_data_path')
+    content_folder = config.get('mc', 'content_folder')
+    doc_root = '/'.join([htmldir, content_folder])
+    static_contents_folder = config.get('mc', 'static_contents_folder')
+
+    if not os.path.lexists(doc_root):
+        os.makedirs(doc_root)
+    if os.path.lexists(static_contents_dist):
+        shutil.rmtree(static_contents_dist)
+    shutil.copytree(static_contents_data_path, static_contents_dist)
 
 
 @make.command()
@@ -119,7 +147,10 @@ def content(conf, mconf, recipe, plgdir, dest):
     datafile = options['dbdir'] + '/datafile'
     htmldir = options.get('htmldir')
     htmldir = config.get('munin_config', 'htmldir', htmldir)
-    content_dist = '/'.join([htmldir, config.get('mc', 'content_folder')])
+    content_folder = config.get('mc', 'content_folder')
+    static_contents_folder = config.get('mc', 'static_contents_folder')
+    content_dist = '/'.join([htmldir, content_folder])
+    static_contents_folder_path = '/'.join([content_dist, static_contents_folder])
     graph_info = MuninDataParser(datafile).parse()
     recipe_list = yaml.load(open(recipe))
     plugin_modules = {}
@@ -215,12 +246,12 @@ def content(conf, mconf, recipe, plgdir, dest):
             # 各マシンのページを作成
             # 要素の構築
             tag_elem = {
-                    'is_success': machine_state == State.SUCCESS,
+                    'is_success': state == State.SUCCESS,
                     'is_warning': bool(is_warning),
                     'is_error': bool(is_error)
                     }
-            tag_elem['tag'] = tag
-            tag_elem['page_url'] = tag+'.html'
+            tag_elem['name'] = tag
+            tag_elem['url'] = tag+'.html'
             if mt not in machine_pages:
                 machine_pages[mt] = {}
             machine_pages[mt][tag] = tag_elem
@@ -230,8 +261,8 @@ def content(conf, mconf, recipe, plgdir, dest):
     domain_pages = {}
     for mt, state_count in machine_total.items():
         machine_elem = {'state_cnt': state_count}
-        machine_elem['tag'] = mt.host
-        machine_elem['page_url'] = '/'.join([mt.host, 'index.html'])
+        machine_elem['name'] = mt.host
+        machine_elem['url'] = '/'.join([mt.host, 'index.html'])
         if mt.domain not in domain_pages:
             domain_pages[mt.domain] = {}
         domain_pages[mt.domain][mt.host] = machine_elem
@@ -241,33 +272,88 @@ def content(conf, mconf, recipe, plgdir, dest):
     top_page = {}
     for domain, state_count in domain_total.items():
         domain_elem = {'state_cnt': state_count}
-        domain_elem['tag'] = domain
-        domain_elem['page_url'] = '/'.join([domain, 'index.html'])
+        domain_elem['name'] = domain
+        domain_elem['url'] = '/'.join([domain, 'index.html'])
         top_page[domain] = domain_elem
 
     # 各ページの作成
-    # 各マシン
     template_folder_path = config.get('template_opt', 'template_folder')
-    env = Environment(loader=FileSystemLoader(template_folder_path, encoding='utf8'))
-    tpl = env.get_template('group-list.tmpl')
+    env = Environment(loader=FileSystemLoader(template_folder_path,
+                      encoding='utf8'))
+    page_title = config.get('template_opt', 'page_name')
+    # 各マシン
+    tpl = env.get_template('item-list-nobadge.tmpl')
+    param = {
+            'title': page_title.decode('utf-8'),
+            'domain': None,
+            'domains': None,
+            'host': None,
+            'hosts': None,
+            'tags': None,
+            'item_list': None,
+            'munin_root_depth': '../'*3,
+            'content_folder': content_folder,
+            'static_contents_folder': static_contents_folder
+            }
+    param['domains'] = [{'url': '../../'+d+'/index.html', 'name': d}
+                        for d in domain_pages]
+    hosts_dict = dict([(
+                        d,
+                        [{'url': '../'+h+'/index.html', 'name': h}
+                         for h in host_dict]
+                    ) for d, host_dict in domain_pages.items()])
     for mt, contents in machine_pages.items():
+        param['domain'] = mt.domain
+        param['host'] = mt.host
+        param['hosts'] = hosts_dict[mt.domain]
+        param['tags'] = contents.values()
+        param['item_list'] = contents.values()
         output_file = '/'.join([content_dist, mt.domain, mt.host, 'index.html'])
-        for tag, elem in contents.items():
-            continue
-        html = tpl.render({}).encode('utf-8')
+        html = tpl.render(param).encode('utf-8')
         open(output_file, 'w').write(html)
 
+    # 各ドメイン
+    tpl = env.get_template('item-list-badge.tmpl')
+    param = {
+            'title': page_title.decode('utf-8'),
+            'domain': None,
+            'domains': None,
+            'hosts': None,
+            'item_list': None,
+            'munin_root_depth': '../'*2,
+            'content_folder': content_folder,
+            'static_contents_folder': static_contents_folder
+            }
+    param['domains'] = [{'url': '../'+d+'/index.html', 'name': d}
+                        for d in domain_pages]
+    hosts_dict = dict([(
+                        d,
+                        [{'url': h+'/index.html', 'name': h}
+                         for h in host_dict]
+                    ) for d, host_dict in domain_pages.items()])
     for domain, contents in domain_pages.items():
+        param['domain'] = domain
+        param['hosts'] = hosts_dict[domain]
+        param['item_list'] = contents.values()
         output_file = '/'.join([content_dist, domain, 'index.html'])
         for tag, elem in contents.items():
             continue
-        html = tpl.render({}).encode('utf-8')
+        html = tpl.render(param).encode('utf-8')
         open(output_file, 'w').write(html)
 
+    # トップ
+    param = {
+            'title': page_title.decode('utf-8'),
+            'domains': [{'url': d+'/index.html', 'name': d}
+                        for d in domain_pages],
+            'item_list': None,
+            'munin_root_depth': '../'*1,
+            'content_folder': content_folder,
+            'static_contents_folder': static_contents_folder
+            }
     output_file = '/'.join([content_dist, 'index.html'])
-    for tag, elem in contents.items():
-        continue
-    html = tpl.render({}).encode('utf-8')
+    param['item_list'] = top_page.values()
+    html = tpl.render(param).encode('utf-8')
     open(output_file, 'w').write(html)
 
 
