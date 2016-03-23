@@ -12,6 +12,11 @@
         {{ item.name }}
         <span class="badge">{{ item.state_cnt.warning }}</span>
       </a>
+    {% elif item.state_cnt.info > 0 %}
+      <a href="{{ item.url }}" class="list-group-item list-group-item-info">
+        {{ item.name }}
+        <span class="badge">{{ item.state_cnt.info }}</span>
+      </a>
     {% else %}
       <a href="{{ item.url }}" class="list-group-item">
         {{ item.name }}

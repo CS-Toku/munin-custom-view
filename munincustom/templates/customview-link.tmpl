@@ -1,5 +1,5 @@
 <TMPL_IF NAME="NCATEGORIES">
-    <div class="customlink" data-name="<TMPL_LOOP NAME="PATH"><TMPL_IF NAME="pathname">;<TMPL_VAR ESCAPE="URL" NAME="PATHNAME"></TMPL_IF></TMPL_LOOP>">
-      [<a href="<TMPL_VAR NAME="R_PATH">/${customview_folder}/<TMPL_LOOP NAME="PATH"><TMPL_IF NAME="pathname"><TMPL_VAR ESCAPE="URL" NAME="PATHNAME">/</TMPL_IF></TMPL_LOOP>index.html">${customview_name}</a>]
-    </div>
+    <span class="customlink" data-name="<TMPL_LOOP NAME="PATH"><TMPL_IF NAME="pathname">;<TMPL_VAR ESCAPE="URL" NAME="PATHNAME"></TMPL_IF></TMPL_LOOP>">
+      [<a href="<TMPL_VAR NAME="R_PATH">/{{ content_folder }}/<TMPL_LOOP NAME="PATH"><TMPL_IF NAME="pathname"><TMPL_VAR ESCAPE="URL" NAME="PATHNAME">/</TMPL_IF></TMPL_LOOP>index.html">{{ page_name }}</a>]
+    </span>
 </TMPL_IF>
