@@ -27,3 +27,15 @@ def load_default_options(module_filepath):
         yaml_obj = {}
     return yaml_obj
 
+
+def is_glob_pattern(pattern):
+    cnt = pattern.count('*')
+    if cnt == 1:
+        return True
+    elif cnt == 0:
+        return False
+    else:
+        raise ValueError('Many Wildcard...')
+
+def glob_match(pattern, target_list):
+    return []

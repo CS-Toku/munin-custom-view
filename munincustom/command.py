@@ -218,7 +218,7 @@ def content(conf, mconf, recipe, plgdir, dest):
     for recipe_data in recipe_list:
         # 解析＆生成？
         # domainとhostに含まれているマシンを引き出す
-        if not recipe_data.get('is_enable', True) or 'host' not in recipe_data and 'domain' not in recipe_data :
+        if not recipe_data.get('is_enable', True) or 'host' not in recipe_data and 'domain' not in recipe_data:
             continue
         hosts = list(
                     map(utils.split_domainhost, recipe_data['host'])
@@ -229,13 +229,31 @@ def content(conf, mconf, recipe, plgdir, dest):
                               if mt in hosts
                               or 'domain' in recipe_data
                               and mt.domain in recipe_data['domain']])
+
+        def collect_series(series_name):
+
+
         if isinstance(recipe_data['source'], dict):
             target = {}
             for mt, graphs in target_machine.items():
                 target[mt] = {}
                 for k, source in recipe_data['source'].items():
-                    series_name = source['series']
+                    series_list = source['series']
+                    if isinstance(series_name, str):
+                        series_list = [series_list]
+                    elif not isinstance(series_name, list):
+                        raise TypeError('Series is list or str.')
+
+                    for series_name in series_list:
+                        if utils.is_glob_pattern(series_name):
+                            for s in utils.glob_match(series_name, graph.get_series().keys())
+                        else:
+                            collect_series(series_name)
+
+
+
                     for cat_name, graph in graphs.items():
+                        utils.glob_match(series_name, graph.get_series().keys())
                         if series_name in graph.get_series():
                             source_data = graph.get_series()[series_name]
                             source_path = source_data.get_rrd_filepath()
