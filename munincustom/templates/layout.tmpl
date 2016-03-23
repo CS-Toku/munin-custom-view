@@ -16,6 +16,10 @@
 
 {% set static_contents_folder_path = munin_root_depth+content_folder+'/'+static_contents_folder %}
 
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Cache-Control" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+
 <link rel="stylesheet" href="{{ static_contents_folder_path }}/bootstrap.min.css">
 <link rel="stylesheet" href="{{ static_contents_folder_path }}/customview.css">
 
@@ -111,13 +115,8 @@
     </div>
    </nav>
   <div id="body">
-    <div class="container">
-      <ul class="list-group">
-        {% block item_list %}
-        {# ここにドメイン・ホスト・タグの一覧と状態を表示。 #}
-        {% endblock %}
-      </ul>
-    </div>
+  {% block body %}
+  {% endblock%}
   </div>
 </body>
 

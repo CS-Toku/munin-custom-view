@@ -41,7 +41,7 @@ class BaseAnalysisClass(object):
         kargs = dict(map(take_param, ['start', 'end', 'resolution', 'cf']))
         rrd = RRD(filepath, mode='r', backend=bindings)
         rrd_data = rrd.fetch(**kargs)
-        return rrd_data['42']
+        return rrd_data.get('42')
 
     def analysis(self):
         """

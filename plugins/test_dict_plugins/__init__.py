@@ -16,5 +16,5 @@ class Analysis(BaseAnalysisClass):
         return dict([(x, State.SUCCESS) for x in self.rrd_data])
 
     def make_view(self):
-        return dict([(k, json.dumps(v, indent=4))
+        return dict([(k, '<pre>'+json.dumps(v, indent=4)+'</pre>')
                     for k, v in self.analyzed_data.items()])

@@ -1,4 +1,4 @@
-{% extends "layout.tmpl" %}
+{% extends "item-list-base.tmpl" %}
 
 {% block item_list %}
   {% for item in item_list %}
@@ -12,15 +12,20 @@
         {{ item.name }}
         <span class="label label-warning">Warning</span>
       </a>
+    {% elif item.is_info %}
+      <a href="{{ item.url }}" class="list-group-item list-group-item-info">
+        {{ item.name }}
+        <span class="label label-info">Warning</span>
+      </a>
     {% elif item.is_success %}
       <a href="{{ item.url }}" class="list-group-item">
         {{ item.name }}
         <span class="label label-success">Success</span>
       </a>
     {% else %}
-      <a href="{{ item.url }}" class="list-group-item list-group-item-info">
+      <a href="{{ item.url }}" class="list-group-item list-group-item-primary">
         {{ item.name }}
-        <span class="label label-info">Unknown state??</span>
+        <span class="label label-primary">Unknown state??</span>
       </a>
     {% endif %}
   {% endfor %}

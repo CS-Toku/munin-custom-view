@@ -6,23 +6,26 @@ from __future__ import print_function
 import os
 import os.path
 import shutil
+import json
 import click
 import imp
 import yaml
-from string import Template
 from jinja2 import Environment, FileSystemLoader
 
 from munincustom import utils, State
 from munincustom.utils.config import ConfigReader
 from munincustom.utils.parser import MuninConfigParser, MuninDataParser
 
-from  munincustom.exceptions import FileNotFoundError
+from munincustom.exceptions import FileNotFoundError
+
 
 def valid_data(checker, *paths):
-    return reduce(lambda acc,x: acc and checker(x), paths, True)
+    return reduce(lambda acc, x: acc and checker(x), paths, True)
+
 
 def check_path(path):
     return bool(isinstance(path, str) and os.path.isfile(path))
+
 
 def check_dir(path):
     return bool(isinstance(path, str) and os.path.isdir(path))
@@ -32,27 +35,27 @@ def check_dir(path):
 def cmd():
     pass
 
+
 @cmd.group()
 def make():
     pass
+
 
 @cmd.group()
 def load():
     pass
 
+
 @cmd.group()
 def test():
     pass
 
+
 @make.command()
 @click.option('--conf', help='mc configuration file path.')
 @click.option('--mconf', help='munin configuration file path.')
-@click.option('--dest', help='destination file path.')
-@click.option('--tmpl', help='template file path.')
-@click.option('--part', help='partial template file path.')
-@click.option('--folder', help='folder name for munin custom url.')
-@click.option('--name', help='name for custom munin page')
-def template(conf, mconf, dest, tmpl, folder, part, name):
+@click.option('--dest', help='destination folder path.')
+def template(conf, mconf, dest):
 
     chk_not_none = lambda x: x is not None
 
@@ -61,35 +64,43 @@ def template(conf, mconf, dest, tmpl, folder, part, name):
     if mconf is None:
         mconf = config.get('mc', 'munin_conf')
 
-    if folder is None:
-        folder = config.get('mc', 'content_folder')
+    folder = config.get('mc', 'content_folder')
+    name = config.get('template_opt', 'page_name')
 
-    if tmpl is None:
-        tmpl = config.get('template_opt', 'template_file')
+    if not valid_data(check_path, mconf):
+        raise FileNotFoundError(mconf)
 
-    if part is None:
-        part = config.get('template_opt', 'partial_file')
-
-    if name is None:
-        name = config.get('template_opt', 'page_name')
-
-    if not valid_data(check_path, mconf, tmpl, part):
-        raise FileNotFoundError(';'.join([str(mconf), str(tmpl), str(part)]))
-
+    template_folder_path = config.get('template_opt', 'template_folder')
+    env = Environment(loader=FileSystemLoader(template_folder_path,
+                      encoding='utf8'))
     _, munin_options = MuninConfigParser(mconf).parse()
-    default_dest_path = munin_options['tmpldir'] if 'tmpldir' in munin_options else None
+    tmpldir = munin_options.get('tmpldir')
+    default_dest = tmpldir.rstrip('/') if tmpldir is not None else None
     if dest is None:
-        dest = config.get('template_opt', 'dest_file', default_dest_path)
+        dest = config.get('template_opt', 'dest_folder', default_dest)
 
     if not valid_data(chk_not_none, folder, name, dest):
         raise ValueError('Data is None')
 
-    partial = Template(open(part).read()).substitute(
-                customview_folder=folder,
-                customview_name=name
-            )
-    template_body = Template(open(tmpl).read()).substitute(customview=partial)
-    open(dest, 'w').write(template_body)
+    overview_dest = dest + '/munin-overview.tmpl'
+    partial_head_dest = dest + '/partial/head.tmpl'
+
+    tpl = env.get_template('munin-overview.tmpl.tmpl')
+    html_template = tpl.render({
+        'content_folder': folder.decode('utf-8'),
+        'page_name': name.decode('utf-8')
+        }).encode('utf-8')
+    open(overview_dest, 'w').write(html_template)
+
+    tpl = env.get_template('head.tmpl.tmpl')
+    static_folder = config.get('mc', 'static_contents_folder')
+    html_template = tpl.render({
+        'content_folder': folder.decode('utf-8'),
+        'static_contents_folder': static_folder.decode('utf-8')
+        }).encode('utf-8')
+    open(partial_head_dest, 'w').write(html_template)
+
+
 
 
 @make.command()
@@ -113,12 +124,22 @@ def static(conf, mconf, dest):
     content_folder = config.get('mc', 'content_folder')
     doc_root = '/'.join([htmldir, content_folder])
     static_contents_folder = config.get('mc', 'static_contents_folder')
+    static_contents_dest = '/'.join([doc_root, static_contents_folder])
 
     if not os.path.lexists(doc_root):
         os.makedirs(doc_root)
-    if os.path.lexists(static_contents_dist):
-        shutil.rmtree(static_contents_dist)
-    shutil.copytree(static_contents_data_path, static_contents_dist)
+    if os.path.lexists(static_contents_dest):
+        shutil.rmtree(static_contents_dest)
+    shutil.copytree(static_contents_data_path, static_contents_dest)
+
+    # JS用static??
+    template_folder_path = config.get('template_opt', 'template_folder')
+    env = Environment(loader=FileSystemLoader(template_folder_path,
+                      encoding='utf8'))
+    tpl = env.get_template('customview.js.tmpl')
+    js = tpl.render(content_folder=content_folder).encode('utf-8')
+    open(static_contents_dest+'/customview.js', 'w').write(js)
+    
 
 
 @make.command()
@@ -150,20 +171,64 @@ def content(conf, mconf, recipe, plgdir, dest):
     content_folder = config.get('mc', 'content_folder')
     static_contents_folder = config.get('mc', 'static_contents_folder')
     content_dist = '/'.join([htmldir, content_folder])
-    static_contents_folder_path = '/'.join([content_dist, static_contents_folder])
+    page_title = config.get('template_opt', 'page_name')
     graph_info = MuninDataParser(datafile).parse()
     recipe_list = yaml.load(open(recipe))
+    template_folder_path = config.get('template_opt', 'template_folder')
+    env = Environment(loader=FileSystemLoader(template_folder_path,
+                      encoding='utf8'))
     plugin_modules = {}
     machine_state_dict = {}
 
+    tag_list = {}
+    for recipe_data in recipe_list:
+        # 解析ページ用にドメイン・ホストのリストを作成。
+        # レシピに含まれているdomainとhostを全て引き出す
+        if not recipe_data.get('is_enable', True) or 'host' not in recipe_data and 'domain' not in recipe_data :
+            continue
+        hosts = list(
+                    map(utils.split_domainhost, recipe_data['host'])
+                    if 'host' in recipe_data
+                    else []
+                )
+        target_machine = [mt for mt in graph_info
+                              if mt in hosts
+                              or 'domain' in recipe_data
+                              and mt.domain in recipe_data['domain']]
+        for mt in target_machine:
+            if mt.domain not in tag_list:
+                tag_list[mt.domain] = {}
+            if mt.host not in tag_list[mt.domain]:
+                tag_list[mt.domain][mt.host] = []
+            tag_list[mt.domain][mt.host].append({
+                    'url': recipe_data['tag']+'.html',
+                    'name': recipe_data['tag']
+                })
+
+    domain_list = [{'url': '../../'+d+'/index.html', 'name': d}
+                        for d in tag_list.keys()]
+    host_list = dict([(
+                        d,
+                        [{'url': '../'+h+'/index.html', 'name': h}
+                         for h in host_dict]
+                    ) for d, host_dict in tag_list.items()])
+
+
+    tpl = env.get_template('analyzed-page.tmpl')
     for recipe_data in recipe_list:
         # 解析＆生成？
         # domainとhostに含まれているマシンを引き出す
-        host_list = list(map(utils.split_domainhost, recipe_data['host']))
+        if not recipe_data.get('is_enable', True) or 'host' not in recipe_data and 'domain' not in recipe_data :
+            continue
+        hosts = list(
+                    map(utils.split_domainhost, recipe_data['host'])
+                    if 'host' in recipe_data
+                    else []
+                )
         target_machine = dict([(mt, v) for mt, v in graph_info.items()
-                              if mt.domain in recipe_data['domain']
-                              or mt in host_list])
-
+                              if mt in hosts
+                              or 'domain' in recipe_data
+                              and mt.domain in recipe_data['domain']])
         if isinstance(recipe_data['source'], dict):
             target = {}
             for mt, graphs in target_machine.items():
@@ -208,12 +273,30 @@ def content(conf, mconf, recipe, plgdir, dest):
         webview = analysis_obj.make_view()
 
         # マシンごとの解析ページの出力
+        param = {
+                'title': page_title.decode('utf-8'),
+                'domain': None,
+                'domains': domain_list,
+                'host': None,
+                'hosts': None,
+                'tag': analysis_obj.tag,
+                'tags': None,
+                'munin_root_depth': '../'*3,
+                'content_folder': content_folder,
+                'static_contents_folder': static_contents_folder
+                }
         for mt, web_content in webview.items():
+            param['domain'] = mt.domain
+            param['host'] = mt.host
+            param['hosts'] = host_list[mt.domain]
+            param['tags'] = tag_list[mt.domain][mt.host]
+            param['web_content'] = web_content
+            html = tpl.render(param).encode('utf-8')
             output_file = '/'.join([content_dist, mt.domain, mt.host, analysis_obj.tag + '.html'])
             dir_name = os.path.dirname(output_file)
             if not os.path.lexists(dir_name):
                 os.makedirs(dir_name)
-            open(output_file, mode='w').write(web_content)
+            open(output_file, mode='w').write(html)
 
         # マシンの状態を格納
         tag = recipe_data['tag']
@@ -232,23 +315,27 @@ def content(conf, mconf, recipe, plgdir, dest):
         for tag, state in states.items():
             is_error = 1 if state == State.ERROR else 0
             is_warning = 1 if state == State.WARNING else 0
+            is_info = 1 if state == State.INFO else 0
             # ホストの集計
             if mt not in machine_total:
-                machine_total[mt] = {'warning': 0, 'error': 0}
+                machine_total[mt] = {'warning': 0, 'error': 0, 'info': 0}
             machine_total[mt]['warning'] += is_warning
             machine_total[mt]['error'] += is_error
+            machine_total[mt]['info'] += is_info
             # ドメインの集計
             if mt.domain not in domain_total:
-                domain_total[mt.domain] = {'warning': 0, 'error': 0}
+                domain_total[mt.domain] = {'warning': 0, 'error': 0, 'info': 0}
             domain_total[mt.domain]['warning'] += is_warning
             domain_total[mt.domain]['error'] += is_error
+            domain_total[mt.domain]['info'] += is_info
 
             # 各マシンのページを作成
             # 要素の構築
             tag_elem = {
                     'is_success': state == State.SUCCESS,
                     'is_warning': bool(is_warning),
-                    'is_error': bool(is_error)
+                    'is_error': bool(is_error),
+                    'is_info': bool(is_info)
                     }
             tag_elem['name'] = tag
             tag_elem['url'] = tag+'.html'
@@ -277,10 +364,6 @@ def content(conf, mconf, recipe, plgdir, dest):
         top_page[domain] = domain_elem
 
     # 各ページの作成
-    template_folder_path = config.get('template_opt', 'template_folder')
-    env = Environment(loader=FileSystemLoader(template_folder_path,
-                      encoding='utf8'))
-    page_title = config.get('template_opt', 'page_name')
     # 各マシン
     tpl = env.get_template('item-list-nobadge.tmpl')
     param = {
@@ -356,10 +439,21 @@ def content(conf, mconf, recipe, plgdir, dest):
     html = tpl.render(param).encode('utf-8')
     open(output_file, 'w').write(html)
 
+    # Munin Topページのラベル用のJSONを生成
+    mt_state_dict = {}
+    for mt, state_count in machine_total.items():
+        k = mt.domain + ';' + mt.host
+        if state_count['error'] > 0:
+            mt_state_dict[k] = State.ERROR
+        elif state_count['warning'] > 0:
+            mt_state_dict[k] = State.WARNING
+        elif state_count['info'] > 0:
+            mt_state_dict[k] = State.INFO
+        else:
+            mt_state_dict[k] = State.SUCCESS
 
-
-
-
+    output_file = '/'.join([content_dist, 'machine-state.json'])
+    json.dump(mt_state_dict, open(output_file, 'w'))
 
 
 @test.command()
