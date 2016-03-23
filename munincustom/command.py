@@ -150,20 +150,64 @@ def content(conf, mconf, recipe, plgdir, dest):
     content_folder = config.get('mc', 'content_folder')
     static_contents_folder = config.get('mc', 'static_contents_folder')
     content_dist = '/'.join([htmldir, content_folder])
-    static_contents_folder_path = '/'.join([content_dist, static_contents_folder])
+    page_title = config.get('template_opt', 'page_name')
     graph_info = MuninDataParser(datafile).parse()
     recipe_list = yaml.load(open(recipe))
+    template_folder_path = config.get('template_opt', 'template_folder')
+    env = Environment(loader=FileSystemLoader(template_folder_path,
+                      encoding='utf8'))
     plugin_modules = {}
     machine_state_dict = {}
 
+    tag_list = {}
+    for recipe_data in recipe_list:
+        # 解析ページ用にドメイン・ホストのリストを作成。
+        # レシピに含まれているdomainとhostを全て引き出す
+        if not recipe_data.get('is_enable', True) or 'host' not in recipe_data and 'domain' not in recipe_data :
+            continue
+        hosts = list(
+                    map(utils.split_domainhost, recipe_data['host'])
+                    if 'host' in recipe_data
+                    else []
+                )
+        target_machine = [mt for mt in graph_info
+                              if mt in hosts
+                              or 'domain' in recipe_data
+                              and mt.domain in recipe_data['domain']]
+        for mt in target_machine:
+            if mt.domain not in tag_list:
+                tag_list[mt.domain] = {}
+            if mt.host not in tag_list[mt.domain]:
+                tag_list[mt.domain][mt.host] = []
+            tag_list[mt.domain][mt.host].append({
+                    'url': recipe_data['tag']+'.html',
+                    'name': recipe_data['tag']
+                })
+
+    domain_list = [{'url': '../../'+d+'/index.html', 'name': d}
+                        for d in tag_list.keys()]
+    host_list = dict([(
+                        d,
+                        [{'url': '../'+h+'/index.html', 'name': h}
+                         for h in host_dict]
+                    ) for d, host_dict in tag_list.items()])
+
+
+    tpl = env.get_template('analyzed-page.tmpl')
     for recipe_data in recipe_list:
         # 解析＆生成？
         # domainとhostに含まれているマシンを引き出す
-        host_list = list(map(utils.split_domainhost, recipe_data['host']))
+        if not recipe_data.get('is_enable', True) or 'host' not in recipe_data and 'domain' not in recipe_data :
+            continue
+        hosts = list(
+                    map(utils.split_domainhost, recipe_data['host'])
+                    if 'host' in recipe_data
+                    else []
+                )
         target_machine = dict([(mt, v) for mt, v in graph_info.items()
-                              if mt.domain in recipe_data['domain']
-                              or mt in host_list])
-
+                              if mt in hosts
+                              or 'domain' in recipe_data
+                              and mt.domain in recipe_data['domain']])
         if isinstance(recipe_data['source'], dict):
             target = {}
             for mt, graphs in target_machine.items():
@@ -208,12 +252,30 @@ def content(conf, mconf, recipe, plgdir, dest):
         webview = analysis_obj.make_view()
 
         # マシンごとの解析ページの出力
+        param = {
+                'title': page_title.decode('utf-8'),
+                'domain': None,
+                'domains': domain_list,
+                'host': None,
+                'hosts': None,
+                'tag': analysis_obj.tag,
+                'tags': None,
+                'munin_root_depth': '../'*3,
+                'content_folder': content_folder,
+                'static_contents_folder': static_contents_folder
+                }
         for mt, web_content in webview.items():
+            param['domain'] = mt.domain
+            param['host'] = mt.host
+            param['hosts'] = host_list[mt.domain]
+            param['tags'] = tag_list[mt.domain][mt.host]
+            param['web_content'] = web_content
+            html = tpl.render(param).encode('utf-8')
             output_file = '/'.join([content_dist, mt.domain, mt.host, analysis_obj.tag + '.html'])
             dir_name = os.path.dirname(output_file)
             if not os.path.lexists(dir_name):
                 os.makedirs(dir_name)
-            open(output_file, mode='w').write(web_content)
+            open(output_file, mode='w').write(html)
 
         # マシンの状態を格納
         tag = recipe_data['tag']
@@ -277,10 +339,6 @@ def content(conf, mconf, recipe, plgdir, dest):
         top_page[domain] = domain_elem
 
     # 各ページの作成
-    template_folder_path = config.get('template_opt', 'template_folder')
-    env = Environment(loader=FileSystemLoader(template_folder_path,
-                      encoding='utf8'))
-    page_title = config.get('template_opt', 'page_name')
     # 各マシン
     tpl = env.get_template('item-list-nobadge.tmpl')
     param = {

@@ -1,0 +1,12 @@
+{% extends "layout.tmpl" %}
+
+{% block body %}
+<div class="container">
+    <ul class="list-group">
+    {% block item_list %}
+    {# ここにドメイン・ホスト・タグの一覧と状態を表示。 #}
+    {% endblock %}
+    </ul>
+</div>
+{% endblock%}
+
