@@ -2,12 +2,10 @@
 import json
 
 from munincustom.plugin import BaseAnalysisClass
-from munincustom import utils, State
+from munincustom import State
 
 
 class Analysis(BaseAnalysisClass):
-
-    default_options = utils.load_default_options(__file__)
 
     def analysis(self):
         f = lambda x: x.update({'data': x['data'] if len(x['data']) <= 5 else x['data'][-5:], 'series': str(x['series'])}) or x

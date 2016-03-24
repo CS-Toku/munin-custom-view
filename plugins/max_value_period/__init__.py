@@ -7,8 +7,6 @@ from munincustom import utils, State
 
 class Analysis(BaseAnalysisClass):
 
-    default_options = utils.load_default_options(__file__)
-
     def analysis(self):
         f = lambda x: x if len(x) <= 5 else x[-5:]
         g = lambda y: (y[0], map(f, y[1]))

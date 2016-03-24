@@ -272,6 +272,9 @@ def content(conf, mconf, recipe, plgdir, dest):
             imp_info = imp.find_module(recipe_data['plugin'], [plgdir])
             m = imp.load_module(recipe_data['plugin'], *imp_info)
             plugin_modules[recipe_data['plugin']] = m
+            plugin_root_dir = '/'.join([plgdir, recipe_data['plugin']])
+            m.Analysis.set_rootdir(plugin_root_dir)
+            m.Analysis.load_default_options()
 
         # 解析メソッド呼び出し
         analysis_kargs = recipe_data.get('args')
