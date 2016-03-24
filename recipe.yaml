@@ -1,56 +1,48 @@
-- tag: test_dict_plugin
-  plugin: test_dict_plugins
-  domain:
-    - localhost
-  host:
-    - machine;machine
-  source:
-    test: 
-      series: load.load
-      cf: AVERAGE
-      start: "-1days"
-      end: "now"
-      resolution: null
-    test2:
-      series: diskstats_latency.sda.avgwrwait
-      cf: AVERAGE
-      start: "-1days"
-      end: "now"
-      resolution: null
-
 - tag: test_list_plugin
   plugin: test_list_plugins
   domain:
     - localhost
   host:
     - machine;machine
-  source:
-    - series: load.load
-    - series: diskstats_latency.sda.avgwrwait
+  sources:
+    param1:
+      series: 
+        - load.load
+      cf: AVERAGE
+      start: "-1days"
+      end: "-5minutes"
+      resolution: null
+    param2:
+      series:
+        - diskstats_latency.*.avgrdwait
       cf: AVERAGE
       start: "-1days"
       end: "-5minutes"
       resolution: null
 
 - tag: fire_error_test
-  is_enable: true
+  is_enable: false
   plugin: fire_error
   host:
     - machine;machine
-  source:
-    - series: load.load
+  sources:
+    - series:
+        - load.load
 
 - tag: fire_warning_test
   is_enable: false
   plugin: fire_warning
   host:
     - machine;machine
-  source:
-    - series: load.load
+  sources:
+    - series:
+        - load.load
 
 - tag: fire_warning_test2
+  is_enable: false
   plugin: fire_warning
   host:
     - machine;machine
-  source:
-    - series: load.load
+  sources:
+    - series:
+        - load.load
