@@ -1,13 +1,14 @@
 #!/bin/env python
 # -*- encoding: utf-8 -*-
 
+import os.path
+import yaml
+
 from pyrrd.rrd import RRD
 from pyrrd.backend import bindings
 
 
 class BaseAnalysisClass(object):
-
-    default_options = {}
 
     def __init__(self, tag, mt_rrd_info, kargs):
         self.rrd_data = {}
@@ -37,6 +38,28 @@ class BaseAnalysisClass(object):
         rrd = RRD(filepath, mode='r', backend=bindings)
         rrd_data = rrd.fetch(**kargs)
         return rrd_data.get('42')
+
+    @classmethod
+    def open_file(cls, filename, *args, **kargs):
+        fullpath = '/'.join([cls.rootdir, filename])
+        return open(fullpath, *args, **kargs)
+
+    @classmethod
+    def load_default_options(cls):
+        try:
+            yaml_obj = yaml.load(cls.open_file('option.yaml', 'r'))
+        except Exception:
+            yaml_obj = {}
+        if not isinstance(yaml_obj, dict):
+            yaml_obj = {}
+        cls.default_options = yaml_obj
+
+    @classmethod
+    def set_rootdir(cls, path):
+        if os.path.isdir(path):
+            cls.rootdir = path
+        else:
+            raise ValueError('Not found directory')
 
     def analysis(self):
         """
