@@ -101,8 +101,6 @@ def template(conf, mconf, dest):
     open(partial_head_dest, 'w').write(html_template)
 
 
-
-
 @make.command()
 @click.option('--conf', help='mc configuration file path.')
 @click.option('--mconf', help='munin configuration file path.')
@@ -139,7 +137,6 @@ def static(conf, mconf, dest):
     tpl = env.get_template('customview.js.tmpl')
     js = tpl.render(content_folder=content_folder).encode('utf-8')
     open(static_contents_dest+'/customview.js', 'w').write(js)
-    
 
 
 @make.command()
@@ -161,7 +158,8 @@ def content(conf, mconf, recipe, plgdir, dest):
     if plgdir is None:
         plgdir = config.get('mc', 'plugin_dir')
 
-    if not valid_data(check_path, mconf, recipe) or not valid_data(check_dir, plgdir):
+    if not valid_data(check_path, mconf, recipe) or \
+       not valid_data(check_dir, plgdir):
         raise FileNotFoundError(mconf)
 
     machines, options = MuninConfigParser(mconf, dict(config.items('munin_config'))).parse()
@@ -184,7 +182,8 @@ def content(conf, mconf, recipe, plgdir, dest):
     for recipe_data in recipe_list:
         # 解析ページ用にドメイン・ホストのリストを作成。
         # レシピに含まれているdomainとhostを全て引き出す
-        if not recipe_data.get('is_enable', True) or 'host' not in recipe_data and 'domain' not in recipe_data :
+        if not recipe_data.get('is_enable', True) or \
+           'host' not in recipe_data and 'domain' not in recipe_data:
             continue
         hosts = list(
                     map(utils.split_domainhost, recipe_data['host'])
@@ -192,9 +191,9 @@ def content(conf, mconf, recipe, plgdir, dest):
                     else []
                 )
         target_machine = [mt for mt in graph_info
-                              if mt in hosts
-                              or 'domain' in recipe_data
-                              and mt.domain in recipe_data['domain']]
+                          if mt in hosts or
+                          'domain' in recipe_data and
+                          mt.domain in recipe_data['domain']]
         for mt in target_machine:
             if mt.domain not in tag_list:
                 tag_list[mt.domain] = {}
@@ -206,19 +205,19 @@ def content(conf, mconf, recipe, plgdir, dest):
                 })
 
     domain_list = [{'url': '../../'+d+'/index.html', 'name': d}
-                        for d in tag_list.keys()]
+                   for d in tag_list.keys()]
     host_list = dict([(
                         d,
                         [{'url': '../'+h+'/index.html', 'name': h}
                          for h in host_dict]
                     ) for d, host_dict in tag_list.items()])
 
-
     tpl = env.get_template('analyzed-page.tmpl')
     for recipe_data in recipe_list:
         # 解析＆生成？
         # domainとhostに含まれているマシンを引き出す
-        if not recipe_data.get('is_enable', True) or 'host' not in recipe_data and 'domain' not in recipe_data:
+        if not recipe_data.get('is_enable', True) or \
+           'host' not in recipe_data and 'domain' not in recipe_data:
             continue
         hosts = list(
                     map(utils.split_domainhost, recipe_data['host'])
@@ -226,56 +225,45 @@ def content(conf, mconf, recipe, plgdir, dest):
                     else []
                 )
         target_machine = dict([(mt, v) for mt, v in graph_info.items()
-                              if mt in hosts
-                              or 'domain' in recipe_data
-                              and mt.domain in recipe_data['domain']])
+                               if mt in hosts or
+                               'domain' in recipe_data and
+                               mt.domain in recipe_data['domain']])
 
-        def collect_series(series_name):
+        all_series = {}
+        for mt, graphs in target_machine.items():
+            all_series[mt] = {}
+            for graph in graphs.values():
+                series = graph.get_series()
+                all_series[mt].update(series)
 
+        target = {}
+        for mt, graphs in target_machine.items():
+            target[mt] = {}
+            has_series = all_series[mt]
+            has_series_name = has_series.keys()
+            for k, source in recipe_data['sources'].items():
+                recipe_series_list = source['series']
+                if not isinstance(recipe_series_list, list):
+                    raise TypeError('Series must be  list type.')
 
-        if isinstance(recipe_data['source'], dict):
-            target = {}
-            for mt, graphs in target_machine.items():
-                target[mt] = {}
-                for k, source in recipe_data['source'].items():
-                    series_list = source['series']
-                    if isinstance(series_name, str):
-                        series_list = [series_list]
-                    elif not isinstance(series_name, list):
-                        raise TypeError('Series is list or str.')
+                series_list = []
+                for series_name in recipe_series_list:
+                    if utils.is_glob_pattern(series_name):
+                        series_list += utils.glob_match(series_name, has_series_name)
+                    elif series_name in has_series_name:
+                        series_list.append(series_name)
 
-                    for series_name in series_list:
-                        if utils.is_glob_pattern(series_name):
-                            for s in utils.glob_match(series_name, graph.get_series().keys())
-                        else:
-                            collect_series(series_name)
-
-
-
-                    for cat_name, graph in graphs.items():
-                        utils.glob_match(series_name, graph.get_series().keys())
-                        if series_name in graph.get_series():
-                            source_data = graph.get_series()[series_name]
-                            source_path = source_data.get_rrd_filepath()
-                            fullpath = options['dbdir'] + '/' + source_path
-                            target[mt][k] = fullpath, source
-                            break
-
-        elif isinstance(recipe_data['source'], list):
-            target = {}
-            for mt, graphs in target_machine.items():
-                target[mt] = []
-                for source in recipe_data['source']:
-                    series_name = source['series']
-                    for cat_name, graph in graphs.items():
-                        if series_name in graph.get_series():
-                            source_data = graph.get_series()[series_name]
-                            source_path = source_data.get_rrd_filepath()
-                            fullpath = options['dbdir'] + '/' + source_path
-                            target[mt].append((fullpath, source))
-                            break
-        else:
-            raise TypeError('Bad recipe.')
+                series_data = [
+                        {
+                            'filepath': (options['dbdir'] +
+                                         '/' +
+                                         has_series[s].get_rrd_filepath()),
+                            'series': has_series[s],
+                            'source': source
+                        }
+                        for s in series_list
+                    ]
+                target[mt][k] = series_data
 
         # plugin moduleの読み込み
         if recipe_data['plugin'] in plugin_modules:
@@ -286,7 +274,8 @@ def content(conf, mconf, recipe, plgdir, dest):
             plugin_modules[recipe_data['plugin']] = m
 
         # 解析メソッド呼び出し
-        analysis_obj = m.Analysis(recipe_data['tag'], target)
+        analysis_kargs = recipe_data.get('args')
+        analysis_obj = m.Analysis(recipe_data['tag'], target, analysis_kargs)
         machine_state = analysis_obj.analysis()
         webview = analysis_obj.make_view()
 

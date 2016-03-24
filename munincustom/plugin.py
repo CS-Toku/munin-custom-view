@@ -9,35 +9,30 @@ class BaseAnalysisClass(object):
 
     default_options = {}
 
-    def __init__(self, tag, mt_rrd_dict, **kargs):
+    def __init__(self, tag, mt_rrd_info, kargs):
         self.rrd_data = {}
-        for mt, path_option in mt_rrd_dict.items():
-            self.load_rrds_from_pathopt(mt, path_option)
+        for mt, series_data in mt_rrd_info.items():
+            self.load_rrds_from_pathopt(mt, series_data)
 
         self.tag = tag
         self.kargs = kargs
 
-    def load_rrds_from_pathopt(self, mt, path_option):
-        if isinstance(path_option, list):
-            self.rrd_data[mt] = [None] * len(path_option)
-            rrd_pairs = zip(range(len(path_option)), path_option)
-        elif isinstance(path_option, dict):
-            self.rrd_data[mt] = {}
-            rrd_pairs = path_option.items()
-        else:
-            raise TypeError("This type doesn't support")
+    def load_rrds_from_pathopt(self, mt, series_data):
+        self.rrd_data[mt] = {}
 
-        for i, (rrdfilepath, options) in rrd_pairs:
-            default_options = self.default_options[i] \
-                                if i in self.default_options else {}
-            data = self.load_rrd(rrdfilepath, options, default_options)
-            self.rrd_data[mt][i] = data
+        for k, series_info in series_data.items():
+            self.rrd_data[mt][k] = [
+                {
+                    'data': self.load_rrd(s['filepath'],
+                                          s['source'],
+                                          self.default_options.get(k, {})),
+                    'series': s['series']
+                } for s in series_info]
 
     @classmethod
     def load_rrd(cls, filepath, options, default_options):
-        take_param = lambda k: (k, options[k] if k in options
-                                else default_options[k] if k in default_options
-                                else None)
+        take_param = lambda k: (k, options[k]
+                                if k in options else default_options.get(k))
         kargs = dict(map(take_param, ['start', 'end', 'resolution', 'cf']))
         rrd = RRD(filepath, mode='r', backend=bindings)
         rrd_data = rrd.fetch(**kargs)
@@ -51,9 +46,10 @@ class BaseAnalysisClass(object):
         * Error = 2
         の3つの状態を辞書で返す
         {
-            ('localhost', 'localhost'): state.SUCCESS,
-            ('machine', 'm1'): state.WARNING,
-            ('machine', 'm2'): state.ERROR
+            ('localhost', 'localhost'): State.SUCCESS,
+            ('machine', 'm1'): State.WARNING,
+            ('machine', 'm2'): State.ERROR
+            ('machine', 'm3'): State.INFO
         }
         """
         pass
