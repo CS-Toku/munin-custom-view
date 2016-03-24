@@ -1,4 +1,5 @@
-- start: "-2days"
+param1:
+  start: "-2days"
   end: "-1days"
   resolution: null
   cf: AVERAGE

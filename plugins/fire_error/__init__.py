@@ -5,8 +5,6 @@ from munincustom import utils, State
 
 class Analysis(BaseAnalysisClass):
 
-    default_options = utils.load_default_options(__file__)
-
     def analysis(self):
         g = lambda x: (x[0], None)
         self.analyzed_data = dict(map(g, self.rrd_data.items()))
