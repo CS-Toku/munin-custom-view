@@ -53,8 +53,20 @@ class Series(object):
         filename = '-'.join([host, path, self.name, series_type])
         return folder + filename + '.rrd'
 
+    def get_link(self):
+        domain = self.in_graph.domain
+        host = self.in_graph.host
+        path = self.in_graph.path
+        if '.' in path:
+            path = path.replace('.', '/') + '.html'
+        else:
+            path += '/index.html' if len(self.in_graph.child) > 0 else '.html'
+        link = '/'.join([domain, host, path])
+        return link
+
     def __repr__(self):
         return '<munincustom.graph.Series object "{0}">'.format(str(self))
+
     def __str__(self):
         return '.'.join([self.in_graph.path, self.name])
 

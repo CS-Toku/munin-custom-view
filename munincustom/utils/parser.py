@@ -102,6 +102,12 @@ class MuninDataParser(AbsParser):
                     else:
                         series[mt][cat_name] = [series_obj]
 
+            cat_name_list = graph[mt].keys()
+            for cat_name, graph_obj in graph[mt].items():
+                child_cat_name = [cn for cn in cat_name_list if cat_name != cn and cat_name in cn]
+                for cn in child_cat_name:
+                    graph_obj.add_child(graph[mt][cn])
+
         for mt, v in series.items():
             for cat_name, series_list in v.items():
                 for s in series_list:
