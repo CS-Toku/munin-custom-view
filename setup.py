@@ -20,8 +20,13 @@ setup(
     entry_points={'console_scripts': [
         'mc = munincustom.command:main',
     ]},
-    install_requires={
-        'click': ['click'],
+    install_requires=[
+        'click',
+        'Jinja2'
+        'PyYAML'
+    ],
+    extras_require={
+        'test': ['pytest']
     },
     classifiers=[
         'Programming Language :: Python :: 2',
