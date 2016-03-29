@@ -1,6 +1,9 @@
 {% extends "layout.tmpl" %}
 
 {% block extend_header %}
+<style type="text/css">
+    tr[data-href] {cursor: pointer;}
+</style>
 <script>
 jQuery( function($) {
     $('tbody tr[data-href]').addClass('clickable').click( function(){

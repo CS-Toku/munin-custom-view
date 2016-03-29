@@ -2,7 +2,6 @@
 # -*- encoding: utf-8 -*-
 
 import math
-import json
 
 from jinja2 import Environment, FileSystemLoader
 

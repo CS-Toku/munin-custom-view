@@ -44,29 +44,15 @@
       end: "-1days"
       resolution: null
 
-- tag: fire_error_test
-  is_enable: false
-  plugin: fire_error
+- tag: nan_check
+  plugin: nan_check
+  is_enable: true
+  domain:
+    - localhost
   host:
     - machine;machine
   sources:
-    - series:
+    period:
+      series: 
         - load.load
-
-- tag: fire_warning_test
-  is_enable: false
-  plugin: fire_warning
-  host:
-    - machine;machine
-  sources:
-    - series:
-        - load.load
-
-- tag: fire_warning_test2
-  is_enable: false
-  plugin: fire_warning
-  host:
-    - machine;machine
-  sources:
-    - series:
-        - load.load
+        - diskstats_latency.*.avgrdwait

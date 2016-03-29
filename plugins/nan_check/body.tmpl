@@ -1,0 +1,39 @@
+<div class="container">
+  {% for s in analyzed_data %}
+  <caption>
+    {% if s.state is equalto state.SUCCESS %}
+        <span class="label label-success">Success</span>
+    {% elif s.state is equalto state.INFO %}
+        <span class="label label-info">Info</span>
+    {% elif s.state is equalto state.WARNING %}
+        <span class="label label-warning">Warning</span>
+    {% else %}
+        <span class="label label-danger">Error</span>
+    {% endif %}
+    <b>{{ s.name }}</b>: {{ s.detail }}
+  </caption>
+  <table class="table table-bordered table-responsive table-hover">
+    <thead>
+      {% if s.state is equalto state.SUCCESS %}
+      <tr class="success">
+      {% elif s.state is equalto state.INFO %}
+      <tr class="info">
+      {% elif s.state is equalto state.WARNING %}
+      <tr class="warning">
+      {% else %}
+      <tr class="danger">
+      {% endif %}
+        <th>Start</th>
+        <th>End</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for nan_period in s.nan_periods %}
+          <td>{{ nan_period.start }}</td>
+          <td>{{ nan_period.end }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+</div>
