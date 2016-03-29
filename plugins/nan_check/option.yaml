@@ -1,5 +1,0 @@
-period:
-  start: "-1days"
-  end: "-5minutes"
-  resolution: null
-  cf: AVERAGE
