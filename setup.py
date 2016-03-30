@@ -25,6 +25,7 @@ setup(
         'mc = munincustom.command:main',
     ]},
     install_requires=[
+        'PyRRD',
         'click',
         'Jinja2',
         'PyYAML'
