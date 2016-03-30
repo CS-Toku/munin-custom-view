@@ -1,0 +1,16 @@
+<div class="container">
+  <table class="table table-bordered table-responsive table-hover">
+    <thead>
+      <tr>
+        <th>Series Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in analyzed_data %}
+      <tr data-href="{{ s[1] }}">
+        <td>{{ s[0] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

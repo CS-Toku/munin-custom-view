@@ -1,0 +1,5 @@
+<TMPL_IF NAME="NCATEGORIES">
+    <span class="customlink" data-name="<TMPL_LOOP NAME="PATH"><TMPL_IF NAME="pathname">;<TMPL_VAR ESCAPE="URL" NAME="PATHNAME"></TMPL_IF></TMPL_LOOP>">
+      [<a href="<TMPL_VAR NAME="R_PATH">/{{ content_folder }}/<TMPL_LOOP NAME="PATH"><TMPL_IF NAME="pathname"><TMPL_VAR ESCAPE="URL" NAME="PATHNAME">/</TMPL_IF></TMPL_LOOP>index.html">{{ page_name }}</a>]
+    </span>
+</TMPL_IF>

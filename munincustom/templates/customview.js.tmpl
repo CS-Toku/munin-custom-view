@@ -1,0 +1,21 @@
+var state_info = {
+  0: ["success", "Success"],
+  1: ["warning", "Warning"],
+  2: ["danger", "Error"]
+}
+
+$.getJSON('{{ content_folder }}/machine-state.json', function(json){
+  $('.customlink').map(function(index, element){
+    var dh = $(element).attr('data-name').slice(1);
+    var state = state_info[json[dh]];
+    var label = $('<span></span>', {
+      'class': "label label-"+state[0]
+    }).text(state[1]);
+    var a = $(element).find('a').append(label);
+    a.text('');
+    a.append(label);
+    $(element).empty();
+    $(element).append(a);
+  });
+});
+
