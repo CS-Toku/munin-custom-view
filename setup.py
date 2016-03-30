@@ -15,7 +15,11 @@ setup(
         ]
     },
     data_files=[
-        ('/etc/munin', ['munin-custom.conf']),
+        ('/etc/munin/customview', ['munin-custom.conf', 'recipe.yaml']),
+        ('/etc/munin/customview/plugins/list_series',
+            ['plugins/list_series/__init__.py',
+             'plugins/list_series/body.tmpl',
+             'plugins/list_series/option.yaml'])
     ],
     entry_points={'console_scripts': [
         'mc = munincustom.command:main',
