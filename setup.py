@@ -22,7 +22,7 @@ setup(
     ]},
     install_requires=[
         'click',
-        'Jinja2'
+        'Jinja2',
         'PyYAML'
     ],
     extras_require={
