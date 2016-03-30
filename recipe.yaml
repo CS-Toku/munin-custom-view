@@ -1,58 +1,8 @@
-- tag: test_list_plugin
-  plugin: test_list_plugins
+- tag: list_series
+  plugin: list_series
   domain:
     - localhost
-  host:
-    - machine;machine
   sources:
-    param1:
+    series:
       series: 
-        - load.load
-      cf: AVERAGE
-      start: "-1days"
-      end: "-5minutes"
-      resolution: null
-    param2:
-      series:
-        - diskstats_latency.*.avgrdwait
-      cf: AVERAGE
-      start: "-1days"
-      end: "-5minutes"
-      resolution: null
-
-- tag: max_value_period
-  plugin: max_value_period
-  domain:
-    - localhost
-  host:
-    - machine;machine
-  sources:
-    new_data:
-      series: 
-        - load.load
-        - diskstats_latency.*.avgrdwait
-      cf: AVERAGE
-      start: "-1days"
-      end: "-5minutes"
-      resolution: null
-    period:
-      series:
-        - load.load
-        - diskstats_latency.*.avgrdwait
-      cf: AVERAGE
-      start: "-1weeks"
-      end: "-1days"
-      resolution: null
-
-- tag: nan_check
-  plugin: nan_check
-  is_enable: true
-  domain:
-    - localhost
-  host:
-    - machine;machine
-  sources:
-    period:
-      series: 
-        - load.load
-        - diskstats_latency.*.avgrdwait
+        - "*"
