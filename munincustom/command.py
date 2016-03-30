@@ -42,11 +42,6 @@ def make():
 
 
 @cmd.group()
-def load():
-    pass
-
-
-@cmd.group()
 def test():
     pass
 

@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='munincustom',
-    version='0.0.0',
+    version='0.0.1',
     description='Munin Cuntom Viewer',
-    author='Takuya Tokuda',
-    author_email='tokuda_takuya@griphone.co.jp',
+    author='CS_Toku',
+    author_email='cs_toku@sce-toku.jp',
     packages=find_packages(),
     package_data={
         'munincustom': [
