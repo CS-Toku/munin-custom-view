@@ -10,6 +10,8 @@ from pyrrd.backend import bindings
 
 class BaseAnalysisClass(object):
 
+    munin_root_path = '../../../'
+
     def __init__(self, tag, mt_rrd_info, kargs):
         self.rrd_data = {}
         for mt, series_data in mt_rrd_info.items():

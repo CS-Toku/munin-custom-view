@@ -42,11 +42,6 @@ def make():
 
 
 @cmd.group()
-def load():
-    pass
-
-
-@cmd.group()
 def test():
     pass
 
@@ -101,11 +96,8 @@ def template(conf, mconf, dest):
     open(partial_head_dest, 'w').write(html_template)
 
 
-@make.command()
-@click.option('--conf', help='mc configuration file path.')
-@click.option('--mconf', help='munin configuration file path.')
-@click.option('--dest', help='destination folder path.')
-def static(conf, mconf, dest):
+# copy static files function
+def copy_static_files(conf, mconf, dest):
 
     config = ConfigReader(conf)
 
@@ -177,6 +169,12 @@ def content(conf, mconf, recipe, plgdir, dest):
                       encoding='utf8'))
     plugin_modules = {}
     machine_state_dict = {}
+
+    # to refresh content_dist
+    shutil.rmtree(content_dist)
+
+    # copy static files
+    copy_static_files(conf, mconf, dest)
 
     tag_list = {}
     for recipe_data in recipe_list:

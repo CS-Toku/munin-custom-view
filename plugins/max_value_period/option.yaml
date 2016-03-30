@@ -1,8 +1,0 @@
-- start: "-2days"
-  end: "-1days"
-  resolution: null
-  cf: AVERAGE
-- start: "-3days"
-  end: "-2days"
-  resolution: null
-  cf: AVERAGE

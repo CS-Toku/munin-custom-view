@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='munincustom',
-    version='0.0.0',
+    version='0.0.1',
     description='Munin Cuntom Viewer',
-    author='Takuya Tokuda',
-    author_email='tokuda_takuya@griphone.co.jp',
+    author='CS_Toku',
+    author_email='cs_toku@sce-toku.jp',
     packages=find_packages(),
     package_data={
         'munincustom': [
@@ -15,13 +15,23 @@ setup(
         ]
     },
     data_files=[
-        ('/etc/munin', ['munin-custom.conf']),
+        ('/etc/munin/customview', ['munin-custom.conf', 'recipe.yaml']),
+        ('/etc/munin/customview/plugins/list_series',
+            ['plugins/list_series/__init__.py',
+             'plugins/list_series/body.tmpl',
+             'plugins/list_series/option.yaml'])
     ],
     entry_points={'console_scripts': [
         'mc = munincustom.command:main',
     ]},
-    install_requires={
-        'click': ['click'],
+    install_requires=[
+        'PyRRD',
+        'click',
+        'Jinja2',
+        'PyYAML'
+    ],
+    extras_require={
+        'test': ['pytest']
     },
     classifiers=[
         'Programming Language :: Python :: 2',
