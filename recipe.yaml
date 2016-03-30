@@ -1,0 +1,8 @@
+- tag: list_series
+  plugin: list_series
+  domain:
+    - localhost
+  sources:
+    series:
+      series: 
+        - "*"

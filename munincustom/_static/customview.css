@@ -1,0 +1,31 @@
+#logo {
+  float: left;: left;
+  height: 100%;
+  margin-right: 0.5em;
+}
+
+.dropdown-toggle{
+  color: #777;
+  text-decoration: none;
+}
+.dropdown-toggle:hover{
+  color: #444;
+  text-decoration: none;
+}
+
+.list-group-item>.label {
+  float: right;
+}
+
+.nav .breadcrumb {
+    margin: 0 7px;
+    background-color: rgba(0,0,0,0) !important;
+}
+
+@media (min-width: 768px) {
+  .nav .breadcrumb {
+      float: left;
+      margin: 7px 10px;
+      background-color: rgba(0,0,0,0) !important;
+  }
+}

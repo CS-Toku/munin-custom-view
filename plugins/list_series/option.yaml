@@ -1,0 +1,5 @@
+series:
+  start: "-5minutes"
+  end: "now"
+  resolution: null
+  cf: AVERAGE
