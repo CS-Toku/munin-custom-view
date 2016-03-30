@@ -3,9 +3,20 @@
 {% block extend_header %}
 <style type="text/css">
     tr[data-href] {cursor: pointer;}
+    table[data-href] {cursor: pointer;}
 </style>
 <script>
 jQuery( function($) {
+    $('table[data-href]').addClass('clickable').click( function(){
+        window.location = $(this).attr('data-href');
+    }).find('a').hover( function() {
+        $(this).parents('table').unbind('click');
+        }, function() {
+        $(this).parents('table').click( function() {
+            window.location = $(this).attr('data-href');
+        });
+    });
+
     $('tbody tr[data-href]').addClass('clickable').click( function(){
         window.location = $(this).attr('data-href');
     }).find('a').hover( function() {
